@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Tornado Web Socket Test</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script>
+    var ws = new WebSocket("ws://{{ host }}/ws/{{key}}");
+    ws.onmessage = function (evt) {
+        $('.main').css('opacity', evt.data);
+        $('.main span').text(evt.data);
+    };
+    </script>
+    <style>
+        .link {
+            width: 800px;
+            margin: 10px auto;
+        }
+        .main {
+            width: 800px;
+            height: 100%;
+            min-height: 500px;
+            margin: 0 auto;
+            background-color: #ff0000;
+            opacity: 100%;
+            font-size: 40px;
+            color: #ffffff;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="link">Откройте ссылку на мобильном устройстве: <strong>http://{{ host }}/pult/{{ key }}</strong></div>
+    <div class="main">
+        <span>1.0</span>
+    </div>
+</body>
+</html>

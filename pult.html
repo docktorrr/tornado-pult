@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Tornado Web Socket Test</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script>
+        var ws = new WebSocket("ws://{{ host }}/ws/{{key}}");
+        $(function(){
+            $('.change').on('click', function() {
+                var action = $(this).data('action');
+                var delta = 0;
+                var val = parseFloat($('#id_opacity').text());
+                if(action=='minus' && val >= 0.1)
+                    delta = -0.1;
+                else if(action=='plus' && val <= 0.9)
+                    delta = 0.1;
+                else
+                    return false;
+                val = (val + delta).toFixed(1);
+                $('#id_opacity').text(val);
+                ws.send(val);
+                return false;
+            });
+        })
+    </script>
+    <style>
+        .pult {width:400px; margin: 15px auto; text-align: center;}
+        .pult .change {width: 100px; height: 100px; margin: 25px;}
+    </style>
+</head>
+<body>
+    <div class="pult">
+    Прозрачность: <strong id="id_opacity">1.0</strong><br>
+    <button class="change" data-action="minus">-</button><button class="change" data-action="plus">+</button>
+    </div>
+</body>
+</html>
