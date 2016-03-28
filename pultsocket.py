@@ -1,11 +1,15 @@
+import random, string
 import tornado.ioloop
 import tornado.websocket
 import tornado.web
-import random, string
+from tornado.concurrent import Future
+from tornado import gen
 
+# for Web Socket
+listeners = {}
 
-LISTENERS = {}
-
+# for Long Polling
+waiters = {}
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -22,6 +26,9 @@ class PultHandler(tornado.web.RequestHandler):
 
 
 class WSHandler(tornado.websocket.WebSocketHandler):
+    """
+    Web Server handler for event updates
+    """
 
     __key__ = None
 
@@ -30,18 +37,47 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
     def open(self, key):
         self.__key__ = key
-        if key not in LISTENERS:
-            LISTENERS[key] = self
-        print "WebSocket opened: %s" % key
+        if key not in listeners:
+            listeners[key] = self
+        print("WebSocket opened: %s" % key)
 
     def on_message(self, message):
-        print "Received from %s: %s" % (self.__key__, message)
-        if self.__key__ in LISTENERS:
-            LISTENERS[self.__key__].write_message(message)
+        print("Received from %s: %s" % (self.__key__, message))
+        if self.__key__ in listeners:
+            listeners[self.__key__].write_message(message)
 
     def on_close(self):
-        del LISTENERS[self.__key__]
-        print "WebSocket closed: %s" % self.__key__
+        del listeners[self.__key__]
+        print("WebSocket closed: %s" % self.__key__)
+
+
+class MessageNewHandler(tornado.web.RequestHandler):
+    """
+    New message handler for long polling
+    """
+    def post(self, key):
+        message = self.get_argument("message")
+        if key in waiters:
+            waiter = waiters[key]
+            waiter.set_result(message)
+            print("Received from %s: %s" % (key, message))
+        else:
+            print("Nobody waits for %s" % key)
+
+
+class MessageUpdateHandler(tornado.web.RequestHandler):
+    """
+    Asynchronous handler for event updates (long polling)
+    """
+
+    @gen.coroutine
+    def post(self, key):
+        self.future = Future()
+        waiters[key] = self.future
+        value = yield self.future
+        if self.request.connection.stream.closed():
+            return
+        self.write(value)
 
 
 if __name__ == "__main__":
@@ -49,6 +85,8 @@ if __name__ == "__main__":
         (r"/", MainHandler),
         (r"/pult/(.*)", PultHandler),
         (r"/ws/(.*)", WSHandler),
+        (r"/poll/(.*)", MessageUpdateHandler),
+        (r"/new/(.*)", MessageNewHandler),
     ])
     application.listen(8888)
     tornado.ioloop.IOLoop.instance().start()

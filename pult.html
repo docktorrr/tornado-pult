@@ -2,10 +2,10 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title>Tornado Web Socket Test</title>
+    <title>Tornado Web Socket / Long Polling Test</title>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script>
-        var ws = new WebSocket("ws://{{ host }}/ws/{{key}}");
+        //var ws = new WebSocket("ws://{{ host }}/ws/{{key}}");
         $(function(){
             $('.change').on('click', function() {
                 var action = $(this).data('action');
@@ -19,10 +19,21 @@
                     return false;
                 val = (val + delta).toFixed(1);
                 $('#id_opacity').text(val);
-                ws.send(val);
+                //ws.send(val);
+
+                $.ajax({
+                    url: "http://{{ host }}/new/{{key}}",
+                    type: "POST",
+                    data: {"message": val},
+                    success: function(response) {
+                        console.log("Command is sent");
+                    }
+                });
+
                 return false;
             });
         })
+
     </script>
     <style>
         .pult {width:400px; margin: 15px auto; text-align: center;}

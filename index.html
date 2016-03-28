@@ -2,14 +2,31 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title>Tornado Web Socket Test</title>
+    <title>Tornado Web Socket / Long Polling Test</title>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script>
-    var ws = new WebSocket("ws://{{ host }}/ws/{{key}}");
-    ws.onmessage = function (evt) {
-        $('.main').css('opacity', evt.data);
-        $('.main span').text(evt.data);
-    };
+    //var ws = new WebSocket("ws://{{ host }}/ws/{{key}}");
+    //ws.onmessage = function (evt) {
+    //    $('.main').css('opacity', evt.data);
+    //    $('.main span').text(evt.data);
+    //};
+
+    function poll() {
+        $.ajax({url: "http://{{ host }}/poll/{{key}}", type: "POST",
+                success: function(data) {
+                    $('.main').css('opacity', data);
+                    $('.main span').text(data);
+                    window.setTimeout(poll, 0);
+                },
+                error: function() {
+                    window.setTimeout(poll, 500);
+                }
+        });
+    }
+
+    $(function(){
+        poll();
+    })
     </script>
     <style>
         .link {
